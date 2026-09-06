@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>원 밖의 한 점에서 긋는 접선의 방정식 탐구 프로그램</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
+        .katex-display { margin: 0.4em 0 !important; }
+        .step-card { transition: all 0.3s ease; }
+        .pulse-border { animation: pulseBorder 2s infinite; }
+        @keyframes pulseBorder {
+            0% { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { border-color: rgba(59, 130, 246, 1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 p-2 rounded-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+                        <path d="M3 3l18 18" stroke-width="2" stroke-linecap="round"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold">원 밖의 점에서 긋는 접선의 방정식</h1>
+                    <p class="text-xs text-indigo-200">고등학교 1학년 수학 I • 단계별 인터랙티브 탐구 프로그램</p>
+                </div>
+            </div>
+            <!-- Progress Bar -->
+            <div class="w-full md:w-auto mt-2 md:mt-0 flex items-center space-x-3">
+                <span class="text-xs font-semibold text-indigo-200">탐구 진행도:</span>
+                <div class="w-32 bg-indigo-950 rounded-full h-3 overflow-hidden border border-indigo-700">
+                    <div id="progress-bar" class="bg-gradient-to-r from-emerald-400 to-cyan-400 h-full w-[16.6%] transition-all duration-500"></div>
+                </div>
+                <span id="progress-text" class="text-xs font-bold text-emerald-400">1 / 6 단계</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Step Indicator Tabs -->
+    <div class="bg-white border-b border-slate-200 sticky top-[60px] z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-2 overflow-x-auto flex space-x-2 scrollbar-none" id="step-tabs">
+            <button onclick="switchStep(1)" id="tab-1" class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-indigo-600 text-white shadow">Step 1: 직관 탐구</button>
+            <button onclick="switchStep(2)" id="tab-2" class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-slate-100 text-slate-400 cursor-not-allowed" disabled>Step 2: 판별식 $D=0$</button>
+            <button onclick="switchStep(3)" id="tab-3" class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-slate-100 text-slate-400 cursor-not-allowed" disabled>Step 3: 거리 공식 $d=r$</button>
+            <button onclick="switchStep(4)" id="tab-4" class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-slate-100 text-slate-400 cursor-not-allowed" disabled>Step 4: 접점 $(x_1, y_1)$</button>
+            <button onclick="switchStep(5)" id="tab-5" class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-slate-100 text-slate-400 cursor-not-allowed" disabled>Step 5: 한걸음 더 ($x=k$)</button>
+            <button onclick="switchStep(6)" id="tab-6" class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-slate-100 text-slate-400 cursor-not-allowed" disabled>Step 6: 마스터 샌드박스</button>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Panel: Interactive Coordinate Plane Canvas -->
+        <div class="lg:col-span-6 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="font-bold text-slate-700 flex items-center space-x-2 text-sm md:text-base">
+                    <span class="bg-indigo-100 text-indigo-700 p-1.5 rounded-lg text-xs font-semibold">시각화</span>
+                    <span id="canvas-title">인터랙티브 기하 그래프</span>
+                </h2>
+                <button onclick="resetCanvasView()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-md transition">초기화</button>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="relative flex-grow bg-slate-900 rounded-xl overflow-hidden min-h-[360px] md:min-h-[420px] flex items-center justify-center">
+                <canvas id="geometryCanvas" class="w-full h-full cursor-crosshair"></canvas>
+                
+                <!-- Overlay Canvas Info Panel -->
+                <div class="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur-md text-white text-xs p-3 rounded-lg border border-slate-700 space-y-1 shadow-lg">
+                    <div class="flex items-center space-x-1">
+                        <span>원의 방정식:</span>
+                        <span id="info-circle" class="text-cyan-400 font-bold ml-1"></span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <span>외부 점 $P$:</span>
+                        <span id="info-point" class="text-amber-400 font-bold ml-1"></span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <span>접선 개수:</span>
+                        <span id="info-count" class="text-emerald-400 font-bold ml-1">2개</span>
+                    </div>
+                </div>
+
+                <!-- Drag Instruction Overlay -->
+                <div class="absolute top-3 right-3 bg-indigo-600/90 text-white text-[11px] px-2.5 py-1 rounded-full shadow-md pointer-events-none animate-pulse">
+                    💡 점 $P$(노란색)를 마우스로 드래그해보세요!
+                </div>
+            </div>
+
+            <!-- Canvas Dynamic Legend -->
+            <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                <div class="bg-cyan-50 text-cyan-800 p-1.5 rounded border border-cyan-200">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-cyan-500 mr-1"></span>원 중심/반지름
+                </div>
+                <div class="bg-amber-50 text-amber-800 p-1.5 rounded border border-amber-200">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 mr-1"></span>외부 점 $P$
+                </div>
+                <div class="bg-emerald-50 text-emerald-800 p-1.5 rounded border border-emerald-200">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1"></span>접선 & 접점
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Step-by-Step Inquiry Worksheets -->
+        <div class="lg:col-span-6 flex flex-col">
+
+            <!-- ================= STEP 1 ================= -->
+            <div id="step-1-content" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">STEP 1</span>
+                        <h3 class="text-lg font-bold text-slate-800 mt-1">직관적 경험: 원 밖의 점과 접선</h3>
+                    </div>
+                </div>
+
+                <div class="prose prose-sm text-slate-600 space-y-3">
+                    <p class="leading-relaxed">
+                        좌표평면 위의 원 $x^2 + y^2 = 25$ 와 원 밖의 한 점 $P(7, 1)$ 이 있습니다.
+                        왼쪽 그래프에서 점 <span class="text-amber-600 font-bold">$P$</span>를 마우스로 자유롭게 움직여보며 위치에 따라 접선이 어떻게 변하는지 관찰해보세요.
+                    </p>
+
+                    <div class="bg-indigo-50/70 border border-indigo-100 p-3.5 rounded-xl text-xs space-y-2">
+                        <div class="font-bold text-indigo-900">🔍 직접 확인해보세요:</div>
+                        <ul class="list-disc list-inside text-indigo-800 space-y-1">
+                            <li>점 $P$가 <strong>원 외부</strong>에 있을 때, 그을 수 있는 접선은 몇 개일까요?</li>
+                            <li>점 $P$를 <strong>원 위(경계)</strong>로 끌고 가보면 접선은 몇 개가 되나요?</li>
+                            <li>점 $P$를 <strong>원 내부</strong>로 옮기면 원과 만나는 접선을 그을 수 있나요?</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Step 1 Quiz -->
+                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+                    <h4 class="text-sm font-bold text-slate-800">질문 1. 원 밖의 점 $P(7, 1)$에서 원 $x^2 + y^2 = 25$에 긋는 접선은 총 몇 개 존재할까요?</h4>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="checkStep1Answer(1)" class="s1-opt py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-100">$1$개</button>
+                        <button onclick="checkStep1Answer(2)" class="s1-opt py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-100">$2$개</button>
+                        <button onclick="checkStep1Answer(3)" class="s1-opt py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-100">무수히 많다</button>
+                    </div>
+                    <div id="step1-feedback" class="hidden p-3 rounded-lg text-xs font-semibold"></div>
+                </div>
+
+                <div class="pt-2 flex justify-end">
+                    <button id="btn-next-1" onclick="switchStep(2)" disabled class="bg-slate-300 text-slate-500 font-bold px-5 py-2.5 rounded-xl cursor-not-allowed transition text-sm">
+                        정답을 맞추면 Step 2로 이동 🔒
+                    </button>
+                </div>
+            </div>
+
+            <!-- ================= STEP 2 ================= -->
+            <div id="step-2-content" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4 hidden">
+                <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+                    <div>
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">STEP 2</span>
+                        <h3 class="text-lg font-bold text-slate-800 mt-1">길 1: 원과 직선의 연립방정식 및 판별식 ($D=0$) 활용</h3>
+                    </div>
+                    <button onclick="setProblemPreset(5, 7, 1)" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-100 font-semibold transition">📍 캔버스 기본 예제 표시</button>
+                </div>
+
+                <!-- Sub Navigation Tabs for Step 2 -->
+                <div class="flex space-x-2 border-b border-slate-200 pb-2 text-xs font-bold">
+                    <button onclick="switchSubStep(2, 1)" id="s2-subtab-1" class="px-3 py-1 rounded-lg bg-indigo-600 text-white">기본 예제</button>
+                    <button onclick="switchSubStep(2, 2)" id="s2-subtab-2" class="px-3 py-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed" disabled>연습 1 🔒</button>
+                    <button onclick="switchSubStep(2, 3)" id="s2-subtab-3" class="px-3 py-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed" disabled>연습 2 🔒</button>
+                </div>
+
+                <!-- Step 2 - Sub 1: Concept & Example -->
+                <div id="s2-subcontent-1" class="space-y-3">
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        구하고자 하는 접선의 기울기를 $m$이라 놓아봅시다.
+                        점 $P(7, 1)$을 지나고 기울기가 $m$인 직선의 방정식은 $y - 1 = m(x - 7)$, 즉 $y = mx - 7m + 1$ 입니다.
+                    </p>
+
+                    <div class="bg-slate-900 text-white p-3.5 rounded-xl text-center text-xs space-y-1.5 border border-slate-800 shadow-inner">
+                        <div class="text-slate-300">원과 직선의 연립: $$x^2 + (mx - 7m + 1)^2 = 25$$</div>
+                        <div class="text-amber-300 font-medium">$x$에 대해 내림차순 정리: $$(1 + m^2)x^2 + 2m(1 - 7m)x + (49m^2 - 14m - 24) = 0$$</div>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl text-xs space-y-1.5">
+                        <div class="font-bold text-blue-900">💡 핵심 원리: '접한다' $\iff$ 교점 $1$개 $\iff$ 판별식 $D = 0$</div>
+                        <p class="text-blue-800 leading-relaxed">
+                            이 이차방정식이 중근을 가져야 하므로 짝수 판별식 $D/4 = 0$을 이용합니다:
+                            $$D/4 = [m(1 - 7m)]^2 - (1 + m^2)(49m^2 - 14m - 24) = 0$$
+                            전개하여 정리하면 $m$에 대한 깔끔한 이차방정식이 완성됩니다!
+                        </p>
+                    </div>
+
+                    <!-- Interactive Algebra Puzzle -->
+                    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-2.5">
+                        <h4 class="text-xs font-bold text-slate-800">예제 퀴즈. 판별식을 정리한 $-24m^2 + 14m + 24 = 0$의 양변을 $-2$로 나누어 $m$에 대한 방정식을 완성하세요.</h4>
+                        <div class="flex items-center justify-center space-x-1.5 text-xs font-bold py-1">
+                            <input type="number" id="s2-a" placeholder="a" class="w-12 p-2 border rounded-lg text-center bg-white shadow-sm focus:ring-2 focus:ring-indigo-400 outline-none">
+                            <span>$m^2 -$</span>
+                            <input type="number" id="s2-b" placeholder="b" class="w-12 p-2 border rounded-lg text-center bg-white shadow-sm focus:ring-2 focus:ring-indigo-400 outline-none">
+                            <span>$m -$</span>
+                            <input type="number" id="s2-c" placeholder="c" class="w-12 p-2 border rounded-lg text-center bg-white shadow-sm focus:ring-2 focus:ring-indigo-400 outline-none">
+                            <span>$= 0$</span>
+                            <button onclick="checkStep2Algebra()" class="bg-indigo-600 text-white px-3 py-2 rounded-lg text-xs hover:bg-indigo-700 shadow ml-1">확인</button>
+                        </div>
+                        <div id="step2-feedback" class="hidden p-2.5 rounded-lg text-xs font-semibold"></div>
+                    </div>
+                </div>
+
+                <!-- Step 2 - Sub 2: Practice Problem 1 -->
+                <div id="s2-subcontent-2" class="space-y-3 hidden">
+                    <div class="flex justify-between items-center bg-indigo-50/70 p-2.5 rounded-lg border border-indigo-100">
+                        <span class="text-xs font-bold text-indigo-900">✏️ 연습 문제 1. 원 $x^2 + y^2 = 25$ 와 점 $P(1, 7)$</span>
+                        <button onclick="setProblemPreset(5, 1, 7)" class="text-[11px] bg-indigo-600 text-white px-2 py-0.5 rounded font-semibold">📍 캔버스에 이 문제 표시</button>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        점 $P(1, 7)$을 지나고 기울기가 $m$인 직선 $y - 7 = m(x - 1)$과 원 $x^2 + y^2 = 25$를 연립한 후, 판별식 $D=0$을 적용하여 정리를 완료해봅시다.
+                    </p>
+                    <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2 text-xs">
+                        <div class="font-bold text-slate-800">질문. 전개 후 정리한 방정식 $-24m^2 - 14m + 24 = 0$의 양변을 $-2$로 나눈 최종 이차방정식과 두 기울기 $m$의 값은 무엇일까요?</div>
+                        <div class="space-y-1.5">
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s2-p1-quiz" value="1" class="text-indigo-600">
+                                <span>$12m^2 + 7m - 12 = 0 \implies m = \frac{3}{4}, -\frac{4}{3}$</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s2-p1-quiz" value="2" class="text-indigo-600">
+                                <span>$12m^2 - 7m - 12 = 0 \implies m = \frac{4}{3}, -\frac{3}{4}$</span>
+                            </label>
+                        </div>
+                        <button onclick="checkStep2Practice1()" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow transition">정답 제출하기</button>
+                        <div id="s2-p1-feedback" class="hidden p-2.5 rounded-lg text-xs font-semibold"></div>
+                    </div>
+                </div>
+
+                <!-- Step 2 - Sub 3: Practice Problem 2 -->
+                <div id="s2-subcontent-3" class="space-y-3 hidden">
+                    <div class="flex justify-between items-center bg-indigo-50/70 p-2.5 rounded-lg border border-indigo-100">
+                        <span class="text-xs font-bold text-indigo-900">✏️ 연습 문제 2. 원 $x^2 + y^2 = 16$ 과 점 $P(5, 0)$</span>
+                        <button onclick="setProblemPreset(4, 5, 0)" class="text-[11px] bg-indigo-600 text-white px-2 py-0.5 rounded font-semibold">📍 캔버스에 이 문제 표시</button>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        점 $P(5, 0)$을 지나는 직선 $y = m(x - 5)$를 원 $x^2 + y^2 = 16$에 연립하여 $x^2 + m^2(x - 5)^2 = 16$을 얻었습니다.
+                    </p>
+                    <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2 text-xs">
+                        <div class="font-bold text-slate-800">질문. 내림차순 정리한 $(1 + m^2)x^2 - 10m^2 x + (25m^2 - 16) = 0$에 짝수 판별식 $D/4 = 0$을 적용하여 얻은 기울기 $m$은?</div>
+                        <div class="space-y-1.5">
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s2-p2-quiz" value="1" class="text-indigo-600">
+                                <span>$9m^2 - 16 = 0 \implies m = \pm \frac{4}{3}$</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s2-p2-quiz" value="2" class="text-indigo-600">
+                                <span>$16m^2 - 9 = 0 \implies m = \pm \frac{3}{4}$</span>
+                            </label>
+                        </div>
+                        <button onclick="checkStep2Practice2()" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow transition">정답 제출하기</button>
+                        <div id="s2-p2-feedback" class="hidden p-2.5 rounded-lg text-xs font-semibold"></div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-between">
+                    <button onclick="switchStep(1)" class="text-xs text-slate-500 underline">← 이전 단계</button>
+                    <button id="btn-next-2" onclick="switchStep(3)" disabled class="bg-slate-300 text-slate-500 font-bold px-5 py-2.5 rounded-xl cursor-not-allowed transition text-sm">
+                        연습문제를 모두 풀면 Step 3로 이동 🔒
+                    </button>
+                </div>
+            </div>
+
+            <!-- ================= STEP 3 ================= -->
+            <div id="step-3-content" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4 hidden">
+                <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+                    <div>
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">STEP 3</span>
+                        <h3 class="text-lg font-bold text-slate-800 mt-1">길 2: 중심과 직선 사이 거리 공식 ($d=r$) 활용</h3>
+                    </div>
+                    <button onclick="setProblemPreset(5, 7, 1)" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-100 font-semibold transition">📍 캔버스 기본 예제 표시</button>
+                </div>
+
+                <!-- Sub Navigation Tabs for Step 3 -->
+                <div class="flex space-x-2 border-b border-slate-200 pb-2 text-xs font-bold">
+                    <button onclick="switchSubStep(3, 1)" id="s3-subtab-1" class="px-3 py-1 rounded-lg bg-indigo-600 text-white">기본 예제</button>
+                    <button onclick="switchSubStep(3, 2)" id="s3-subtab-2" class="px-3 py-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed" disabled>연습 1 🔒</button>
+                    <button onclick="switchSubStep(3, 3)" id="s3-subtab-3" class="px-3 py-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed" disabled>연습 2 🔒</button>
+                </div>
+
+                <!-- Step 3 - Sub 1: Concept & Example -->
+                <div id="s3-subcontent-1" class="space-y-3">
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Step 2의 연립방정식 풀이가 복잡했나요?
+                        이번에는 기하적 성질인 <strong>'원의 중심 $(0,0)$에서 접선까지의 거리 $d$ = 반지름 $r$'</strong>을 이용해봅시다!
+                    </p>
+
+                    <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs space-y-1.5">
+                        <div class="font-bold text-amber-900">💡 점과 직선 사이 거리 공식 적용:</div>
+                        <p class="text-amber-800">
+                            직선의 일반형 $mx - y - 7m + 1 = 0$ 과 원의 중심 $(0,0)$, 반지름 $r = 5$ 이므로:
+                        </p>
+                        <div class="text-center py-1.5 text-slate-900 font-bold bg-white/80 rounded-lg border border-amber-200 shadow-sm">
+                            $$d = \frac{|m(0) - (0) - 7m + 1|}{\sqrt{m^2 + (-1)^2}} = \frac{|1 - 7m|}{\sqrt{m^2 + 1}} = 5$$
+                        </div>
+                        <p class="text-amber-900 pt-0.5">
+                            양변을 제곱하면 $(1 - 7m)^2 = 25(m^2 + 1) \implies 12m^2 - 7m - 12 = 0$ 으로 <strong>Step 2와 완전히 동일한 식</strong>이 한 눈에 얻어집니다!
+                        </p>
+                    </div>
+
+                    <!-- Step 3 Quiz 1 -->
+                    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-2">
+                        <h4 class="text-xs font-bold text-slate-800">예제 퀴즈. $12m^2 - 7m - 12 = (3m - 4)(4m + 3) = 0$ 을 풀어 구한 두 접선의 기울기와 특징은?</h4>
+                        <div class="space-y-1.5 text-xs">
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-100 cursor-pointer">
+                                <input type="radio" name="s3-quiz" value="1" class="text-indigo-600">
+                                <span>$m = \frac{4}{3}, -\frac{3}{4}$ 이며, 두 접선은 서로 수직으로 만난다.</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-100 cursor-pointer">
+                                <input type="radio" name="s3-quiz" value="2" class="text-indigo-600">
+                                <span>$m = 2, -3$ 이며, 두 접선은 평행하다.</span>
+                            </label>
+                        </div>
+                        <button onclick="checkStep3Quiz()" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow transition">정답 제출하기</button>
+                        <div id="step3-feedback" class="hidden p-2.5 rounded-lg text-xs font-semibold"></div>
+                    </div>
+                </div>
+
+                <!-- Step 3 - Sub 2: Practice Problem 1 -->
+                <div id="s3-subcontent-2" class="space-y-3 hidden">
+                    <div class="flex justify-between items-center bg-indigo-50/70 p-2.5 rounded-lg border border-indigo-100">
+                        <span class="text-xs font-bold text-indigo-900">✏️ 연습 문제 1. 원 $x^2 + y^2 = 25$ 와 점 $P(1, 7)$ ($d=r$ 풀이)</span>
+                        <button onclick="setProblemPreset(5, 1, 7)" class="text-[11px] bg-indigo-600 text-white px-2 py-0.5 rounded font-semibold">📍 캔버스에 이 문제 표시</button>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        직선 $mx - y - m + 7 = 0$ 과 원의 중심 $(0,0)$ 사이의 거리 $d = \frac{|7 - m|}{\sqrt{m^2 + 1}}$ 가 반지름 $r = 5$ 와 같다는 식을 세워보세요.
+                    </p>
+                    <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2 text-xs">
+                        <div class="font-bold text-slate-800">질문. 양변을 제곱하여 정리한 식 $(7 - m)^2 = 25(m^2 + 1)$ 로부터 구한 두 접선의 방정식은?</div>
+                        <div class="space-y-1.5">
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s3-p1-quiz" value="1" class="text-indigo-600">
+                                <span>$y - 7 = \frac{3}{4}(x - 1)$ 및 $y - 7 = -\frac{4}{3}(x - 1)$</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s3-p1-quiz" value="2" class="text-indigo-600">
+                                <span>$y - 7 = 2(x - 1)$ 및 $y - 7 = -1(x - 1)$</span>
+                            </label>
+                        </div>
+                        <button onclick="checkStep3Practice1()" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow transition">정답 제출하기</button>
+                        <div id="s3-p1-feedback" class="hidden p-2.5 rounded-lg text-xs font-semibold"></div>
+                    </div>
+                </div>
+
+                <!-- Step 3 - Sub 3: Practice Problem 2 -->
+                <div id="s3-subcontent-3" class="space-y-3 hidden">
+                    <div class="flex justify-between items-center bg-indigo-50/70 p-2.5 rounded-lg border border-indigo-100">
+                        <span class="text-xs font-bold text-indigo-900">✏️ 연습 문제 2. 원 $x^2 + y^2 = 16$ 과 점 $P(5, 0)$ ($d=r$ 풀이)</span>
+                        <button onclick="setProblemPreset(4, 5, 0)" class="text-[11px] bg-indigo-600 text-white px-2 py-0.5 rounded font-semibold">📍 캔버스에 이 문제 표시</button>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        직선 $mx - y - 5m = 0$ 과 원의 중심 $(0,0)$ 사이 거리 $d = \frac{|-5m|}{\sqrt{m^2 + 1}} = 4$ 식을 양변 제곱합니다.
+                    </p>
+                    <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2 text-xs">
+                        <div class="font-bold text-slate-800">질문. $25m^2 = 16(m^2 + 1) \implies 9m^2 = 16$ 을 만족하는 기울기 $m$과 두 접선의 관계는?</div>
+                        <div class="space-y-1.5">
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s3-p2-quiz" value="1" class="text-indigo-600">
+                                <span>$m = \pm \frac{4}{3}$ 이며, $y$축 및 $x$축에 대해 서로 대칭 형태이다.</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s3-p2-quiz" value="2" class="text-indigo-600">
+                                <span>$m = \pm \frac{3}{4}$ 이며, 두 접선은 서로 수직이다.</span>
+                            </label>
+                        </div>
+                        <button onclick="checkStep3Practice2()" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow transition">정답 제출하기</button>
+                        <div id="s3-p2-feedback" class="hidden p-2.5 rounded-lg text-xs font-semibold"></div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-between">
+                    <button onclick="switchStep(2)" class="text-xs text-slate-500 underline">← 이전 단계</button>
+                    <button id="btn-next-3" onclick="switchStep(4)" disabled class="bg-slate-300 text-slate-500 font-bold px-5 py-2.5 rounded-xl cursor-not-allowed transition text-sm">
+                        연습문제를 모두 풀면 Step 4로 이동 🔒
+                    </button>
+                </div>
+            </div>
+
+            <!-- ================= STEP 4 ================= -->
+            <div id="step-4-content" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4 hidden">
+                <div class="border-b border-slate-100 pb-3 flex justify-between items-center">
+                    <div>
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">STEP 4</span>
+                        <h3 class="text-lg font-bold text-slate-800 mt-1">길 3: 접점 $(x_1, y_1)$을 주인공으로 세우기</h3>
+                    </div>
+                    <button onclick="setProblemPreset(5, 7, 1)" class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-100 font-semibold transition">📍 캔버스 기본 예제 표시</button>
+                </div>
+
+                <!-- Sub Navigation Tabs for Step 4 -->
+                <div class="flex space-x-2 border-b border-slate-200 pb-2 text-xs font-bold">
+                    <button onclick="switchSubStep(4, 1)" id="s4-subtab-1" class="px-3 py-1 rounded-lg bg-indigo-600 text-white">기본 예제</button>
+                    <button onclick="switchSubStep(4, 2)" id="s4-subtab-2" class="px-3 py-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed" disabled>연습 1 🔒</button>
+                    <button onclick="switchSubStep(4, 3)" id="s4-subtab-3" class="px-3 py-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed" disabled>연습 2 🔒</button>
+                </div>
+
+                <!-- Step 4 - Sub 1: Concept & Example -->
+                <div id="s4-subcontent-1" class="space-y-3">
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        이번에는 접선의 **접점의 좌표를 모르므로 $(x_1, y_1)$**이라 놓아봅시다.
+                        원 위에서의 접선 공식과 문제의 조건을 연립합니다.
+                    </p>
+
+                    <div class="space-y-2 text-xs">
+                        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                            <strong class="text-indigo-700">식 ① (접선의 공식):</strong> $$x_1 x + y_1 y = 25$$
+                        </div>
+                        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                            <strong class="text-indigo-700">식 ② (접점은 원 위의 점):</strong> $$x_1^2 + y_1^2 = 25$$
+                        </div>
+                        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                            <strong class="text-indigo-700">식 ③ (접선이 점 $P(7,1)$을 지남):</strong> $$7x_1 + y_1 = 25 \implies y_1 = 25 - 7x_1$$
+                        </div>
+                    </div>
+
+                    <div class="bg-cyan-50 border border-cyan-200 p-3 rounded-xl text-xs space-y-1.5">
+                        <div class="font-bold text-cyan-900">🧩 연립방정식 풀기:</div>
+                        <p class="text-cyan-800 leading-relaxed">
+                            $y_1 = 25 - 7x_1$을 식 ②에 대입해보면:
+                            $$x_1^2 + (25 - 7x_1)^2 = 25 \quad \implies \quad 50x_1^2 - 350x_1 + 600 = 0$$
+                            양변을 $50$으로 나누면 인수분해식 $x_1^2 - 7x_1 + 12 = (x_1 - 3)(x_1 - 4) = 0$ 이 되어 두 접점 좌표 <span class="font-bold text-indigo-700">$(3, 4)$</span> 와 <span class="font-bold text-indigo-700">$(4, -3)$</span> 이 구해집니다!
+                        </p>
+                    </div>
+
+                    <!-- Step 4 Quiz 1 -->
+                    <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl space-y-2">
+                        <h4 class="text-xs font-bold text-slate-800">예제 퀴즈. 접점 방식과 기울기 방식($D=0, d=r$)을 비교한 설명으로 옳은 것은?</h4>
+                        <div class="space-y-1.5 text-xs">
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-100 cursor-pointer">
+                                <input type="radio" name="s4-quiz" value="1" class="text-indigo-600">
+                                <span>두 방식 모두 항상 기울기 $m$이 $2$개씩 완벽하게 계산된다.</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-100 cursor-pointer">
+                                <input type="radio" name="s4-quiz" value="2" class="text-indigo-600">
+                                <span>접점 방식은 이차연립방정식을 풀어야하지만 수직 접선($x=k$)도 예외 없이 구한다.</span>
+                            </label>
+                        </div>
+                        <button onclick="checkStep4Quiz()" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow transition">정답 제출하기</button>
+                        <div id="step4-feedback" class="hidden p-2.5 rounded-lg text-xs font-semibold"></div>
+                    </div>
+                </div>
+
+                <!-- Step 4 - Sub 2: Practice Problem 1 -->
+                <div id="s4-subcontent-2" class="space-y-3 hidden">
+                    <div class="flex justify-between items-center bg-indigo-50/70 p-2.5 rounded-lg border border-indigo-100">
+                        <span class="text-xs font-bold text-indigo-900">✏️ 연습 문제 1. 원 $x^2 + y^2 = 25$ 와 점 $P(1, 7)$ (접점 풀이)</span>
+                        <button onclick="setProblemPreset(5, 1, 7)" class="text-[11px] bg-indigo-600 text-white px-2 py-0.5 rounded font-semibold">📍 캔버스에 이 문제 표시</button>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        접선의 공식 $x_1 x + y_1 y = 25$ 에 $P(1,7)$을 대입하면 $x_1 + 7y_1 = 25 \implies x_1 = 25 - 7y_1$ 입니다.
+                        이를 원의 방정식 $x_1^2 + y_1^2 = 25$ 에 대입합니다.
+                    </p>
+                    <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2 text-xs">
+                        <div class="font-bold text-slate-800">질문. 정리된 식 $y_1^2 - 7y_1 + 12 = 0$ 을 풀어 구한 두 접점의 좌표는?</div>
+                        <div class="space-y-1.5">
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s4-p1-quiz" value="1" class="text-indigo-600">
+                                <span>$(-3, 4)$ 및 $(4, 3)$</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s4-p1-quiz" value="2" class="text-indigo-600">
+                                <span>$(3, -4)$ 및 $(-4, -3)$</span>
+                            </label>
+                        </div>
+                        <button onclick="checkStep4Practice1()" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow transition">정답 제출하기</button>
+                        <div id="s4-p1-feedback" class="hidden p-2.5 rounded-lg text-xs font-semibold"></div>
+                    </div>
+                </div>
+
+                <!-- Step 4 - Sub 3: Practice Problem 2 -->
+                <div id="s4-subcontent-3" class="space-y-3 hidden">
+                    <div class="flex justify-between items-center bg-indigo-50/70 p-2.5 rounded-lg border border-indigo-100">
+                        <span class="text-xs font-bold text-indigo-900">✏️ 연습 문제 2. 원 $x^2 + y^2 = 25$ 와 점 $P(-7, 1)$ (접점 풀이)</span>
+                        <button onclick="setProblemPreset(5, -7, 1)" class="text-[11px] bg-indigo-600 text-white px-2 py-0.5 rounded font-semibold">📍 캔버스에 이 문제 표시</button>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        접선 $-7x_1 + y_1 = 25 \implies y_1 = 25 + 7x_1$ 을 $x_1^2 + y_1^2 = 25$ 에 대입하여 대수적으로 두 접점을 구해봅시다.
+                    </p>
+                    <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2 text-xs">
+                        <div class="font-bold text-slate-800">질문. $x_1^2 + 7x_1 + 12 = 0$ 이므로 두 접점의 좌표는 무엇인가요?</div>
+                        <div class="space-y-1.5">
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s4-p2-quiz" value="1" class="text-indigo-600">
+                                <span>$(-3, 4)$ 및 $(-4, -3)$</span>
+                            </label>
+                            <label class="flex items-center space-x-2 p-2 bg-white rounded-lg border hover:bg-slate-50 cursor-pointer">
+                                <input type="radio" name="s4-p2-quiz" value="2" class="text-indigo-600">
+                                <span>$(3, 4)$ 및 $(4, -3)$</span>
+                            </label>
+                        </div>
+                        <button onclick="checkStep4Practice2()" class="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 shadow transition">정답 제출하기</button>
+                        <div id="s4-p2-feedback" class="hidden p-2.5 rounded-lg text-xs font-semibold"></div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-between">
+                    <button onclick="switchStep(3)" class="text-xs text-slate-500 underline">← 이전 단계</button>
+                    <button id="btn-next-4" onclick="switchStep(5)" disabled class="bg-slate-300 text-slate-500 font-bold px-5 py-2.5 rounded-xl cursor-not-allowed transition text-sm">
+                        연습문제를 모두 풀면 Step 5로 이동 🔒
+                    </button>
+                </div>
+            </div>
+
+            <!-- ================= STEP 5 ================= -->
+            <div id="step-5-content" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4 hidden">
+                <div class="border-b border-slate-100 pb-3">
+                    <span class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md">STEP 5 (한걸음 더)</span>
+                    <h3 class="text-lg font-bold text-slate-800 mt-1">🚨 함정 탈출: "어라? 기울기 $m$이 $1$개만 나와요!"</h3>
+                </div>
+
+                <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-xl text-xs space-y-2">
+                    <div class="font-bold text-rose-900">🔥 새로운 상황: 원 $x^2 + y^2 = 25$ 밖의 점 $Q(5, 10)$</div>
+                    <p class="text-rose-800">
+                        점 $Q(5, 10)$에서 기울기 방법($d=r$)을 써보면 다음과 같은 식을 얻게 됩니다:
+                    </p>
+                    <div class="bg-white p-3 rounded-lg border border-rose-200 text-rose-950 font-semibold text-center text-xs space-y-1 shadow-sm">
+                        $$\frac{|10 - 5m|}{\sqrt{m^2 + 1}} = 5 \quad \implies \quad (10 - 5m)^2 = 25(m^2 + 1)$$
+                        $$100 - 100m + 25m^2 = 25m^2 + 25$$
+                        <div class="text-rose-600 font-bold mt-1 text-sm">
+                            $$-100m = -75 \quad \implies \quad m = \frac{3}{4} \quad \text{(오직 1개!)}$$
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    이차항 $25m^2$이 양변에서 상쇄되어 $m$의 값이 오직 하나만 나옵니다!
+                    사라진 나머지 접선 하나는 대체 어디로 간 걸까요?
+                </p>
+
+                <!-- Interactive Visual Button to trigger Q(5,10) preset -->
+                <button onclick="loadTrapPreset()" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 text-white rounded-xl font-bold text-xs shadow hover:opacity-90 transition flex items-center justify-center space-x-2">
+                    <span>📍 왼쪽 캔버스에 점 $Q(5, 10)$ 시각화하여 확인하기</span>
+                </button>
+
+                <!-- Step 5 Quiz -->
+                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+                    <h4 class="text-sm font-bold text-slate-800">질문 4. 기울기 $m$이 $1$개만 나온 원인과 나머지 접선의 방정식은?</h4>
+                    <div class="space-y-2 text-xs">
+                        <label class="flex items-center space-x-2 p-2.5 bg-white rounded-lg border border-slate-200 hover:bg-slate-100 cursor-pointer transition">
+                            <input type="radio" name="s5-quiz" value="1" class="text-indigo-600">
+                            <span>원 밖의 점이라도 접선이 $1$개만 존재하는 예외적인 도형 위치 관계이다.</span>
+                        </label>
+                        <label class="flex items-center space-x-2 p-2.5 bg-white rounded-lg border border-slate-200 hover:bg-slate-100 cursor-pointer transition">
+                            <input type="radio" name="s5-quiz" value="2" class="text-indigo-600">
+                            <span>$y$축에 평행한 수직선 $x=5$는 기울기 $m$이 정의되지 않으므로 그래프에서 찾아내야 한다.</span>
+                        </label>
+                    </div>
+                    <button onclick="checkStep5Quiz()" class="w-full bg-rose-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-rose-700 shadow transition">함정 해결하기</button>
+                    <div id="step5-feedback" class="hidden p-3 rounded-lg text-xs font-semibold"></div>
+                </div>
+
+                <div class="pt-2 flex justify-between">
+                    <button onclick="switchStep(4)" class="text-xs text-slate-500 underline">← 이전 단계</button>
+                    <button id="btn-next-5" onclick="switchStep(6)" disabled class="bg-slate-300 text-slate-500 font-bold px-5 py-2.5 rounded-xl cursor-not-allowed transition text-sm">
+                        함정 탈출 성공시 Final Sandbox 오픈 🔓
+                    </button>
+                </div>
+            </div>
+
+            <!-- ================= STEP 6 ================= -->
+            <div id="step-6-content" class="step-card bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4 hidden">
+                <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">STEP 6 (마스터)</span>
+                        <h3 class="text-lg font-bold text-slate-800 mt-1">자유 탐구 샌드박스 & 수식 자동 계산기</h3>
+                    </div>
+                    <span class="text-2xl">🎉</span>
+                </div>
+
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    축하합니다! 원 밖의 한 점에서 긋는 접선의 방정식 원리를 모두 마스터하셨습니다.
+                    아래 조건값을 자유롭게 변경해보며 세 가지 풀이법의 계산 결과를 비교해보세요.
+                </p>
+
+                <!-- Sandbox Controls -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-3 gap-3 text-xs">
+                    <div>
+                        <label class="block text-slate-600 font-bold mb-1">원 반지름 ($r$)</label>
+                        <input type="number" id="sb-r" value="5" min="1" max="10" class="w-full p-2 border rounded-lg bg-white text-center font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-slate-600 font-bold mb-1">점 $P$의 $x$좌표</label>
+                        <input type="number" id="sb-px" value="7" step="0.5" class="w-full p-2 border rounded-lg bg-white text-center font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-slate-600 font-bold mb-1">점 $P$의 $y$좌표</label>
+                        <input type="number" id="sb-py" value="1" step="0.5" class="w-full p-2 border rounded-lg bg-white text-center font-bold">
+                    </div>
+                    <button onclick="applySandboxInputs()" class="col-span-3 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow">
+                        그래프 및 수식 실시간 반영하기
+                    </button>
+                </div>
+
+                <!-- Sandbox Live Calculations Result -->
+                <div class="bg-slate-900 text-slate-100 p-4 rounded-xl text-xs space-y-2 border border-slate-700 shadow-inner">
+                    <div class="font-bold text-emerald-400 border-b border-slate-800 pb-1.5 flex justify-between items-center">
+                        <span>실시간 수식 계산 결과:</span>
+                        <span id="sb-status-badge" class="text-cyan-300">접선 $2$개 검출됨</span>
+                    </div>
+                    <div id="sb-calc-result" class="space-y-2 pt-1">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- Summary Table -->
+                <div class="overflow-x-auto text-xs">
+                    <table class="min-w-full border-collapse border border-slate-200 rounded-lg">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700">
+                                <th class="p-2 border border-slate-200">구분</th>
+                                <th class="p-2 border border-slate-200">판별식 ($D=0$)</th>
+                                <th class="p-2 border border-slate-200">거리 공식 ($d=r$)</th>
+                                <th class="p-2 border border-slate-200">접점 $(x_1, y_1)$</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-slate-600 text-[11px]">
+                            <tr>
+                                <td class="p-2 border border-slate-200 font-bold bg-slate-50">장점</td>
+                                <td class="p-2 border border-slate-200">개념이 가장 표준적임</td>
+                                <td class="p-2 border border-slate-200 font-semibold text-indigo-700">계산이 가장 간결하고 빠름</td>
+                                <td class="p-2 border border-slate-200">수직 접선($x=k$)도 완벽히 구함</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 border border-slate-200 font-bold bg-slate-50">주의점</td>
+                                <td class="p-2 border border-slate-200">전개 과정이 매우 길어짐</td>
+                                <td class="p-2 border border-slate-200 text-rose-600 font-semibold">수직 접선($x=k$) 미검출 가능</td>
+                                <td class="p-2 border border-slate-200">이차 연립방정식 풀이가 필요함</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pt-2 flex justify-start">
+                    <button onclick="switchStep(1)" class="text-xs text-indigo-600 font-bold hover:underline">🔄 첫 단계부터 다시 탐구하기</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // State variables
+        let currentStep = 1;
+        let unlockedSteps = [1];
+        
+        // Tracking sub-steps progress within Step 2, Step 3, Step 4
+        let unlockedSubSteps = {
+            2: [1],
+            3: [1],
+            4: [1]
+        };
+
+        // Geometry state (Clean example: Circle r=5, P(7, 1))
+        let circleR = 5;
+        let pointP = { x: 7, y: 1 };
+        let isDragging = false;
+
+        // Canvas setup
+        const canvas = document.getElementById('geometryCanvas');
+        const ctx = canvas.getContext('2d');
+        let scale = 25;
+        let originX = 0;
+        let originY = 0;
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            originX = canvas.width / 2;
+            originY = canvas.height / 2;
+            scale = Math.min(canvas.width, canvas.height) / 24;
+            drawCanvas();
+        }
+
+        function renderMath() {
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false }
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+
+        function switchStep(stepNum) {
+            if (!unlockedSteps.includes(stepNum)) return;
+            currentStep = stepNum;
+
+            for (let i = 1; i <= 6; i++) {
+                const content = document.getElementById(`step-${i}-content`);
+                const tab = document.getElementById(`tab-${i}`);
+                if (content) content.classList.add('hidden');
+                if (tab) {
+                    if (unlockedSteps.includes(i)) {
+                        tab.disabled = false;
+                        tab.className = (i === stepNum)
+                            ? 'px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-indigo-600 text-white shadow'
+                            : 'px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-indigo-100 text-indigo-700 hover:bg-indigo-200';
+                    } else {
+                        tab.disabled = true;
+                        tab.className = 'px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-slate-100 text-slate-400 cursor-not-allowed';
+                    }
+                }
+            }
+
+            const activeContent = document.getElementById(`step-${stepNum}-content`);
+            if (activeContent) activeContent.classList.remove('hidden');
+
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+            if (progressBar) progressBar.style.width = `${(stepNum / 6) * 100}%`;
+            if (progressText) progressText.textContent = `${stepNum} / 6 단계`;
+
+            if (stepNum === 6) updateSandboxMath();
+            drawCanvas();
+            setTimeout(renderMath, 30);
+        }
+
+        function checkStep1Answer(ans) {
+            const feedback = document.getElementById('step1-feedback');
+            const btnNext = document.getElementById('btn-next-1');
+            feedback.classList.remove('hidden');
+
+            if (ans === 2) {
+                feedback.className = 'p-3 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                feedback.innerHTML = '🎉 <strong>정답입니다!</strong> 원 밖의 한 점에서 원에 긋는 접선은 항상 <strong>2개</strong> 존재합니다.';
+                btnNext.disabled = false;
+                btnNext.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl transition text-sm cursor-pointer shadow-md pulse-border';
+                btnNext.innerHTML = 'Step 2로 이동하기 ➔';
+                if (!unlockedSteps.includes(2)) unlockedSteps.push(2);
+                if (window.confetti) confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
+            } else {
+                feedback.className = 'p-3 rounded-lg text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300';
+                feedback.innerHTML = '💡 <strong>힌트:</strong> 점 $P$에서 원의 위쪽과 아래쪽 경계선으로 직선을 그어 만나는 점이 각각 몇 개 생기는지 원의 양쪽 접점을 확인해 보세요!';
+            }
+            setTimeout(renderMath, 30);
+        }
+
+        // Helper to draw infinite line passing accurately through Point P and Tangent Point T
+        function drawInfiniteLine(p1, p2, color) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+
+            if (Math.abs(dx) < 1e-5) {
+                // Vertical line x = p1.x
+                const cx = originX + p1.x * scale;
+                ctx.moveTo(cx, 0);
+                ctx.lineTo(cx, canvas.height);
+            } else {
+                const slope = dy / dx;
+                // Line: y - p1.y = slope * (x - p1.x) => y = slope * (x - p1.x) + p1.y
+                const xMin = -30;
+                const xMax = 30;
+                const yMin = slope * (xMin - p1.x) + p1.y;
+                const yMax = slope * (xMax - p1.x) + p1.y;
+
+                ctx.moveTo(originX + xMin * scale, originY - yMin * scale);
+                ctx.lineTo(originX + xMax * scale, originY - yMax * scale);
+            }
+            ctx.stroke();
+        }
+
+        function drawCanvas() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Background Grid
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            const stepGrid = Math.max(1, Math.floor(100 / scale));
+
+            for (let x = -30; x <= 30; x += stepGrid) {
+                const cx = originX + x * scale;
+                ctx.beginPath();
+                ctx.moveTo(cx, 0);
+                ctx.lineTo(cx, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = -30; y <= 30; y += stepGrid) {
+                const cy = originY - y * scale;
+                ctx.beginPath();
+                ctx.moveTo(0, cy);
+                ctx.lineTo(canvas.width, cy);
+                ctx.stroke();
+            }
+
+            // Draw Axes
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0, originY);
+            ctx.lineTo(canvas.width, originY);
+            ctx.moveTo(originX, 0);
+            ctx.lineTo(originX, canvas.height);
+            ctx.stroke();
+
+            // Axis labels & Ticks
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px sans-serif';
+            for (let x = -25; x <= 25; x += 5) {
+                if (x === 0) continue;
+                const cx = originX + x * scale;
+                ctx.fillText(x.toString(), cx - 6, originY + 14);
+            }
+            for (let y = -25; y <= 25; y += 5) {
+                if (y === 0) continue;
+                const cy = originY - y * scale;
+                ctx.fillText(y.toString(), originX + 6, cy + 4);
+            }
+
+            // Draw Main Circle
+            const rPx = circleR * scale;
+            ctx.beginPath();
+            ctx.arc(originX, originY, rPx, 0, Math.PI * 2);
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 2.5;
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.08)';
+            ctx.fill();
+            ctx.stroke();
+
+            // Center Point O
+            ctx.beginPath();
+            ctx.arc(originX, originY, 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#06b6d4';
+            ctx.fill();
+            ctx.fillText('O(0,0)', originX + 6, originY - 6);
+
+            // Point P
+            const px = originX + pointP.x * scale;
+            const py = originY - pointP.y * scale;
+
+            const dist = Math.hypot(pointP.x, pointP.y);
+
+            // Draw Tangent Lines based on Point P's position relative to the Circle
+            let countStr = "2개";
+            if (dist > circleR + 0.1) {
+                // Case 1: Point P is strictly outside (2 Tangent Lines)
+                const angleP = Math.atan2(pointP.y, pointP.x);
+                const alpha = Math.acos(circleR / dist);
+
+                const t1 = { x: circleR * Math.cos(angleP + alpha), y: circleR * Math.sin(angleP + alpha) };
+                const t2 = { x: circleR * Math.cos(angleP - alpha), y: circleR * Math.sin(angleP - alpha) };
+
+                // Draw Infinite Tangent Lines crossing through Point P accurately
+                drawInfiniteLine(pointP, t1, '#10b981');
+                drawInfiniteLine(pointP, t2, '#10b981');
+
+                // Dashed Radii to Tangent Points
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(originX, originY);
+                ctx.lineTo(originX + t1.x * scale, originY - t1.y * scale);
+                ctx.moveTo(originX, originY);
+                ctx.lineTo(originX + t2.x * scale, originY - t2.y * scale);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Tangent Points Dots
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.arc(originX + t1.x * scale, originY - t1.y * scale, 5, 0, Math.PI * 2);
+                ctx.arc(originX + t2.x * scale, originY - t2.y * scale, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillText(`T1(${t1.x.toFixed(1)}, ${t1.y.toFixed(1)})`, originX + t1.x * scale + 6, originY - t1.y * scale - 6);
+                ctx.fillText(`T2(${t2.x.toFixed(1)}, ${t2.y.toFixed(1)})`, originX + t2.x * scale + 6, originY - t2.y * scale + 12);
+
+                countStr = "2개 (외부)";
+            } else if (Math.abs(dist - circleR) <= 0.1) {
+                // Case 2: Point P is ON the circle boundary (1 Tangent Line)
+                const perpDir = { x: -pointP.y, y: pointP.x };
+                const p2 = { x: pointP.x + perpDir.x, y: pointP.y + perpDir.y };
+
+                // Draw 1 Single Infinite Tangent Line
+                drawInfiniteLine(pointP, p2, '#10b981');
+
+                // Dashed Radius from Center O to Point P (Tangent point)
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(originX, originY);
+                ctx.lineTo(px, py);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Tangent Point Dot on P
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.arc(px, py, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillText(`접점 T(${pointP.x.toFixed(1)}, ${pointP.y.toFixed(1)})`, px + 10, py + 14);
+
+                countStr = "1개 (원 위)";
+            } else {
+                // Case 3: Point P is inside the circle (0 Tangent Lines)
+                countStr = "0개 (원 내부)";
+            }
+
+            // Draw Point P dot
+            ctx.beginPath();
+            ctx.arc(px, py, 7, 0, Math.PI * 2);
+            ctx.fillStyle = '#f59e0b';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText(`P(${pointP.x}, ${pointP.y})`, px + 10, py - 10);
+
+            // Info panel updates
+            const infoCircle = document.getElementById('info-circle');
+            const infoPoint = document.getElementById('info-point');
+            const infoCount = document.getElementById('info-count');
+            if (infoCircle) infoCircle.innerHTML = `x² + y² = ${circleR * circleR}`;
+            if (infoPoint) infoPoint.innerHTML = `P(${pointP.x}, ${pointP.y})`;
+            if (infoCount) infoCount.textContent = countStr;
+        }
+
+        function getCanvasMathPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const cx = clientX - rect.left;
+            const cy = clientY - rect.top;
+            const x = Math.round(((cx - originX) / scale) * 2) / 2;
+            const y = Math.round(((originY - cy) / scale) * 2) / 2;
+            return { x, y, cx, cy };
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getCanvasMathPos(e);
+            const pPxX = originX + pointP.x * scale;
+            const pPxY = originY - pointP.y * scale;
+            if (Math.hypot(pos.cx - pPxX, pos.cy - pPxY) < 18) {
+                isDragging = true;
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const pos = getCanvasMathPos(e);
+            pointP.x = pos.x;
+            pointP.y = pos.y;
+            drawCanvas();
+            if (currentStep === 6) updateSandboxMath();
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        canvas.addEventListener('touchstart', (e) => {
+            const pos = getCanvasMathPos(e);
+            const pPxX = originX + pointP.x * scale;
+            const pPxY = originY - pointP.y * scale;
+            if (Math.hypot(pos.cx - pPxX, pos.cy - pPxY) < 25) {
+                isDragging = true;
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const pos = getCanvasMathPos(e);
+            pointP.x = pos.x;
+            pointP.y = pos.y;
+            drawCanvas();
+            if (currentStep === 6) updateSandboxMath();
+        });
+
+        window.addEventListener('touchend', () => { isDragging = false; });
+
+        function setProblemPreset(r, px, py) {
+            circleR = r;
+            pointP = { x: px, y: py };
+            resizeCanvas();
+            setTimeout(renderMath, 30);
+        }
+
+        function switchSubStep(stepNum, subNum) {
+            if (!unlockedSubSteps[stepNum].includes(subNum)) return;
+
+            for (let i = 1; i <= 3; i++) {
+                const subContent = document.getElementById(`s${stepNum}-subcontent-${i}`);
+                const subTab = document.getElementById(`s${stepNum}-subtab-${i}`);
+                if (subContent) subContent.classList.add('hidden');
+                if (subTab) {
+                    subTab.className = unlockedSubSteps[stepNum].includes(i)
+                        ? (i === subNum ? 'px-3 py-1 rounded-lg bg-indigo-600 text-white font-bold' : 'px-3 py-1 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-bold')
+                        : 'px-3 py-1 rounded-lg bg-slate-100 text-slate-400 cursor-not-allowed font-bold';
+                }
+            }
+            const activeContent = document.getElementById(`s${stepNum}-subcontent-${subNum}`);
+            if (activeContent) activeContent.classList.remove('hidden');
+            setTimeout(renderMath, 30);
+        }
+
+        function unlockSubStep(stepNum, subNum) {
+            if (!unlockedSubSteps[stepNum].includes(subNum)) {
+                unlockedSubSteps[stepNum].push(subNum);
+            }
+            const tab = document.getElementById(`s${stepNum}-subtab-${subNum}`);
+            if (tab) tab.disabled = false;
+            switchSubStep(stepNum, subNum);
+        }
+
+        function checkStep2Algebra() {
+            const a = parseFloat(document.getElementById('s2-a').value);
+            const b = parseFloat(document.getElementById('s2-b').value);
+            const c = parseFloat(document.getElementById('s2-c').value);
+            const feedback = document.getElementById('step2-feedback');
+            feedback.classList.remove('hidden');
+
+            if (a === 12 && b === 7 && c === 12) {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                feedback.innerHTML = '🎉 <strong>정답입니다!</strong> 다음 연습 1 문제를 풀어봅시다!';
+                unlockSubStep(2, 2);
+            } else {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300';
+                feedback.innerHTML = '💡 <strong>힌트:</strong> $-24m^2 + 14m + 24 = 0$의 양변을 **음수(-2)**로 나눌 때, 최고차항 $m^2$의 계수를 양수로 만들면서 일차항과 상수항의 부호가 어떻게 변하는지 다시 점검해보세요!';
+            }
+            setTimeout(renderMath, 30);
+        }
+
+        function checkStep2Practice1() {
+            const selected = document.querySelector('input[name="s2-p1-quiz"]:checked');
+            const feedback = document.getElementById('s2-p1-feedback');
+            if (!selected) return;
+
+            feedback.classList.remove('hidden');
+            if (selected.value === "1") {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                feedback.innerHTML = '🎉 <strong>정답입니다!</strong> 다음 연습 2 문제를 풀어봅시다!';
+                unlockSubStep(2, 3);
+            } else {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300';
+                feedback.innerHTML = '💡 <strong>힌트:</strong> 전개 후 정리한 식 $-24m^2 - 14m + 24 = 0$의 양변을 $-2$로 나눌 때, 일차항 $-14m$이 나누어져 어떤 부호의 항이 되는지 확인해보세요!';
+            }
+            setTimeout(renderMath, 30);
+        }
+
+        function checkStep2Practice2() {
+            const selected = document.querySelector('input[name="s2-p2-quiz"]:checked');
+            const feedback = document.getElementById('s2-p2-feedback');
+            const btnNext = document.getElementById('btn-next-2');
+            if (!selected) return;
+
+            feedback.classList.remove('hidden');
+            if (selected.value === "1") {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                feedback.innerHTML = '🎉 <strong>정답입니다!</strong> Step 2의 모든 문제를 완료했습니다!';
+                btnNext.disabled = false;
+                btnNext.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl transition text-sm cursor-pointer shadow-md pulse-border';
+                btnNext.innerHTML = 'Step 3로 이동하기 ➔';
+                if (!unlockedSteps.includes(3)) unlockedSteps.push(3);
+            } else {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300';
+                feedback.innerHTML = '💡 <strong>힌트:</strong> 판별식 $D/4 = (-5m^2)^2 - (1+m^2)(25m^2-16) = 0$에서 괄호를 풀었을 때 $m^2$ 항의 계수를 다시 유심히 정리해 보세요!';
+            }
+            setTimeout(renderMath, 30);
+        }
+
+        function checkStep3Quiz() {
+            const selected = document.querySelector('input[name="s3-quiz"]:checked');
+            const feedback = document.getElementById('step3-feedback');
+            if (!selected) return;
+
+            feedback.classList.remove('hidden');
+            if (selected.value === "1") {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                feedback.innerHTML = '🎉 <strong>정답입니다!</strong> 두 기울기의 곱이 $-1$이 되는 성질을 잘 확인했습니다. 다음 연습 1 문제를 풀어봅시다!';
+                unlockSubStep(3, 2);
+            } else {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300';
+                feedback.innerHTML = '💡 <strong>힌트:</strong> 이차방정식 $12m^2 - 7m - 12 = 0$을 인수분해하여 구한 두 근 $m_1, m_2$의 곱 $m_1 \times m_2$가 얼마가 되는지 확인해보세요!';
+            }
+            setTimeout(renderMath, 30);
+        }
+
+        function checkStep3Practice1() {
+            const selected = document.querySelector('input[name="s3-p1-quiz"]:checked');
+            const feedback = document.getElementById('s3-p1-feedback');
+            if (!selected) return;
+
+            feedback.classList.remove('hidden');
+            if (selected.value === "1") {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                feedback.innerHTML = '🎉 <strong>정답입니다!</strong> 다음 연습 2 문제를 풀어봅시다!';
+                unlockSubStep(3, 3);
+            } else {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300';
+                feedback.innerHTML = '💡 <strong>힌트:</strong> 거리 공식 식 $(7-m)^2 = 25(m^2+1)$의 양변을 푼 후 $m^2$을 한쪽으로 정리하여 $m$의 값을 구해보세요!';
+            }
+            setTimeout(renderMath, 30);
+        }
+
+        function checkStep3Practice2() {
+            const selected = document.querySelector('input[name="s3-p2-quiz"]:checked');
+            const feedback = document.getElementById('s3-p2-feedback');
+            const btnNext = document.getElementById('btn-next-3');
+            if (!selected) return;
+
+            feedback.classList.remove('hidden');
+            if (selected.value === "1") {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                feedback.innerHTML = '🎉 <strong>정답입니다!</strong> Step 3의 모든 문제를 완수했습니다!';
+                btnNext.disabled = false;
+                btnNext.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl transition text-sm cursor-pointer shadow-md pulse-border';
+                btnNext.innerHTML = 'Step 4로 이동하기 ➔';
+                if (!unlockedSteps.includes(4)) unlockedSteps.push(4);
+            } else {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300';
+                feedback.innerHTML = '💡 <strong>힌트:</strong> $25m^2 = 16(m^2+1)$에서 $16m^2$을 좌변으로 이항하면 $9m^2 = 16$이 됩니다. $m$의 값을 계산해보세요!';
+            }
+            setTimeout(renderMath, 30);
+        }
+
+        function checkStep4Quiz() {
+            const selected = document.querySelector('input[name="s4-quiz"]:checked');
+            const feedback = document.getElementById('step4-feedback');
+            if (!selected) return;
+
+            feedback.classList.remove('hidden');
+            if (selected.value === "2") {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                feedback.innerHTML = '🎉 <strong>정답입니다!</strong> 연습 1 문제를 풀어봅시다!';
+                unlockSubStep(4, 2);
+            } else {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300';
+                feedback.innerHTML = '💡 <strong>힌트:</strong> 기울기 $m$을 이용한 수식에서는 기울기가 존재하지 않는 형태($y$축과 평행한 수직선 $x=k$)를 문자로 나타내지 못했던 한계를 떠올려보세요!';
+            }
+            setTimeout(renderMath, 30);
+        }
+
+        function checkStep4Practice1() {
+            const selected = document.querySelector('input[name="s4-p1-quiz"]:checked');
+            const feedback = document.getElementById('s4-p1-feedback');
+            if (!selected) return;
+
+            feedback.classList.remove('hidden');
+            if (selected.value === "1") {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                feedback.innerHTML = '🎉 <strong>정답입니다!</strong> 다음 연습 2 문제를 풀어봅시다!';
+                unlockSubStep(4, 3);
+            } else {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300';
+                feedback.innerHTML = '💡 <strong>힌트:</strong> $y_1^2 - 7y_1 + 12 = 0$을 인수분해하면 $(y_1-3)(y_1-4)=0$입니다. 각 $y_1$을 $x_1 = 25 - 7y_1$에 대입하여 점의 좌표를 구해봅시다!';
+            }
+            setTimeout(renderMath, 30);
+        }
+
+        function checkStep4Practice2() {
+            const selected = document.querySelector('input[name="s4-p2-quiz"]:checked');
+            const feedback = document.getElementById('s4-p2-feedback');
+            const btnNext = document.getElementById('btn-next-4');
+            if (!selected) return;
+
+            feedback.classList.remove('hidden');
+            if (selected.value === "1") {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                feedback.innerHTML = '🎉 <strong>정답입니다!</strong> Step 4의 모든 연습문제를 풀었습니다!';
+                btnNext.disabled = false;
+                btnNext.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl transition text-sm cursor-pointer shadow-md pulse-border';
+                btnNext.innerHTML = 'Step 5 (한걸음 더)로 이동하기 ➔';
+                if (!unlockedSteps.includes(5)) unlockedSteps.push(5);
+            } else {
+                feedback.className = 'p-2.5 rounded-lg text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300';
+                feedback.innerHTML = '💡 <strong>힌트:</strong> $x_1^2 + 7x_1 + 12 = 0$을 인수분해할 때 양수와 음수 부호를 신중하게 확인하여 $x_1$의 값을 구해 보세요!';
+            }
+            setTimeout(renderMath, 30);
+        }
+
+        function loadTrapPreset() {
+            circleR = 5;
+            pointP = { x: 5, y: 10 };
+            resizeCanvas();
+            setTimeout(renderMath, 30);
+        }
+
+        function checkStep5Quiz() {
+            const selected = document.querySelector('input[name="s5-quiz"]:checked');
+            const feedback = document.getElementById('step5-feedback');
+            const btnNext = document.getElementById('btn-next-5');
+            if (!selected) return;
+
+            feedback.classList.remove('hidden');
+            if (selected.value === "2") {
+                feedback.className = 'p-3 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                feedback.innerHTML = '🎉 <strong>완벽한 발견입니다!</strong> 수직선 $x=5$는 기울기 $m$이 존재하지 않아 대수적 공식을 통해 $m$값으로 구해지지 않았던 것입니다. 따라서 기울기 방식을 쓸 때는 <strong>반드시 그래프를 그려 수직 접선 유무를 확인</strong>해야 합니다!';
+                btnNext.disabled = false;
+                btnNext.className = 'bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl transition text-sm cursor-pointer shadow-md pulse-border';
+                btnNext.innerHTML = 'Final Sandbox 열기 ➔';
+                if (!unlockedSteps.includes(6)) unlockedSteps.push(6);
+            } else {
+                feedback.className = 'p-3 rounded-lg text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-300';
+                feedback.innerHTML = '💡 <strong>힌트:</strong> 원 밖의 점 $Q(5,10)$을 왼쪽 좌표평면 캔버스에 직접 나타내어 보았나요? $Q(5,10)$에서 아래로 똑바로 그어지는 수직 접선이 있는지 시각적으로 확인해 보세요!';
+            }
+            setTimeout(renderMath, 30);
+        }
+
+        function applySandboxInputs() {
+            circleR = Math.max(1, parseFloat(document.getElementById('sb-r').value) || 5);
+            pointP.x = parseFloat(document.getElementById('sb-px').value) || 7;
+            pointP.y = parseFloat(document.getElementById('sb-py').value) || 1;
+            resizeCanvas();
+            updateSandboxMath();
+        }
+
+        // Convert decimal to exact LaTeX Fraction string using continued fractions algorithm
+        function toFractionStr(val) {
+            if (Math.abs(val) < 1e-5) return "0";
+            if (Math.abs(val - Math.round(val)) < 1e-5) return Math.round(val).toString();
+
+            let negative = val < 0;
+            let absVal = Math.abs(val);
+
+            let h1 = 1, h2 = 0, k1 = 0, k2 = 1;
+            let b = absVal;
+            do {
+                let a = Math.floor(b);
+                let aux = h1;
+                h1 = a * h1 + h2;
+                h2 = aux;
+                aux = k1;
+                k1 = a * k1 + k2;
+                k2 = aux;
+                b = 1 / (b - a);
+            } while (Math.abs(absVal - h1 / k1) > 1e-5 && k1 < 100);
+
+            let num = negative ? -h1 : h1;
+            let den = k1;
+
+            if (den === 1) return num.toString();
+            if (num < 0) return `-\\frac{${Math.abs(num)}}{${den}}`;
+            return `\\frac{${num}}{${den}}`;
+        }
+
+        // Formatting Tangent Line Equation in clean LaTeX
+        function formatLineEquation(m, px, py) {
+            let mStr = toFractionStr(m);
+
+            let lhs = "y";
+            if (py > 0) lhs += ` - ${py}`;
+            else if (py < 0) lhs += ` + ${Math.abs(py)}`;
+
+            let pStr = "";
+            if (px > 0) pStr = `- ${px}`;
+            else if (px < 0) pStr = `+ ${Math.abs(px)}`;
+
+            if (pStr === "") {
+                if (mStr === "1") return `${lhs} = x`;
+                if (mStr === "-1") return `${lhs} = -x`;
+                if (mStr === "0") return `${lhs} = 0`;
+                return `${lhs} = ${mStr}x`;
+            } else {
+                if (mStr === "1") return `${lhs} = x ${pStr}`;
+                if (mStr === "-1") return `${lhs} = -(x ${pStr})`;
+                if (mStr === "0") return `${lhs} = 0`;
+                return `${lhs} = ${mStr}(x ${pStr})`;
+            }
+        }
+
+        function updateSandboxMath() {
+            document.getElementById('sb-r').value = circleR;
+            document.getElementById('sb-px').value = pointP.x;
+            document.getElementById('sb-py').value = pointP.y;
+
+            const resDiv = document.getElementById('sb-calc-result');
+            const badge = document.getElementById('sb-status-badge');
+            const d2 = pointP.x * pointP.x + pointP.y * pointP.y;
+            const r2 = circleR * circleR;
+
+            if (d2 < r2 - 0.1) {
+                badge.textContent = '원 내부 (접선 없음)';
+                badge.className = 'text-rose-400 font-bold';
+                resDiv.innerHTML = '<div class="text-rose-300 font-semibold">점 $P$가 원 내부이므로 접선을 그을 수 없습니다.</div>';
+            } else if (Math.abs(d2 - r2) <= 0.1) {
+                badge.textContent = '원 위 (접선 1개)';
+                badge.className = 'text-cyan-400 font-bold';
+                resDiv.innerHTML = `<div>접선의 방정식: <span class="text-amber-300 font-bold">$$${pointP.x}x + ${pointP.y}y = ${r2}$$</span></div>`;
+            } else {
+                badge.textContent = '원 외부 (접선 2개)';
+                badge.className = 'text-emerald-400 font-bold';
+
+                let hasVertical = (Math.abs(Math.abs(pointP.x) - circleR) < 0.001);
+                
+                let html = `<div>• 좌표 정보: 점 $P(${pointP.x}, ${pointP.y})$, 원 $x^2 + y^2 = ${r2}$</div>`;
+                if (hasVertical) {
+                    html += `<div class="text-amber-300 font-semibold">⚠️ 수직 접선 감지! 기울기로 구해지지 않는 수직 접선 하나는 <span class="text-emerald-400 font-bold">$x = ${pointP.x}$</span> 입니다.</div>`;
+                }
+                html += `<div class="mt-1">• 기울기 공식 $d=r$ 적용 계산 과정:</div>`;
+                html += `<div class="bg-slate-800 p-3 rounded-lg text-xs text-cyan-200 space-y-1.5 border border-slate-700">`;
+                
+                const A = pointP.x * pointP.x - r2;
+                const B = -2 * pointP.x * pointP.y;
+                const C = pointP.y * pointP.y - r2;
+
+                if (Math.abs(A) < 0.001) {
+                    const m1 = -C / B;
+                    const m1Str = toFractionStr(m1);
+                    html += `<div>$m$에 대한 1차방정식으로 축소됨: $$m = ${m1Str}$$</div>`;
+                    html += `<div class="text-emerald-300 font-bold">구한 접선 2개:</div>`;
+                    html += `<div class="text-emerald-300 font-bold text-sm bg-slate-900/60 p-2 rounded text-center">$$${formatLineEquation(m1, pointP.x, pointP.y)}$$<div class="text-xs text-slate-300 my-1">그리고</div>$$x = ${pointP.x}$$</div>`;
+                } else {
+                    const disc = B * B - 4 * A * C;
+                    if (disc >= 0) {
+                        const m1 = (-B + Math.sqrt(disc)) / (2 * A);
+                        const m2 = (-B - Math.sqrt(disc)) / (2 * A);
+                        const m1Str = toFractionStr(m1);
+                        const m2Str = toFractionStr(m2);
+                        html += `<div>구한 기울기: $$m_1 = ${m1Str}$$ $$m_2 = ${m2Str}$$</div>`;
+                        html += `<div class="text-emerald-300 font-bold">구한 접선 2개:</div>`;
+                        html += `<div class="text-emerald-300 font-bold text-sm bg-slate-900/60 p-2 rounded text-center space-y-2">$$${formatLineEquation(m1, pointP.x, pointP.y)}$$ $$${formatLineEquation(m2, pointP.x, pointP.y)}$$</div>`;
+                    }
+                }
+                html += `</div>`;
+                resDiv.innerHTML = html;
+            }
+            if (window.renderMathInElement) {
+                renderMathInElement(resDiv, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false }
+                    ],
+                    throwOnError: false
+                });
+            }
+        }
+
+        function resetCanvasView() {
+            circleR = 5;
+            pointP = { x: 7, y: 1 };
+            resizeCanvas();
+            if (currentStep === 6) updateSandboxMath();
+            setTimeout(renderMath, 30);
+        }
+
+        window.onload = function() {
+            resizeCanvas();
+            renderMath();
+            window.addEventListener('resize', resizeCanvas);
+        };
+    </script>
+</body>
+</html>
